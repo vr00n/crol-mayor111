@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC Contract Awards Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-brand">
+            <h1>NYC Contract Awards Explorer</h1>
+            <span class="header-subtitle">Investigative Tool for City Record Online Data</span>
+        </div>
+        <div class="header-stats">
+            <div class="stat">
+                <span class="stat-value" id="total-contracts">--</span>
+                <span class="stat-label">Contracts</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="total-amount">--</span>
+                <span class="stat-label">Total Value</span>
+            </div>
+            <div class="stat data-info">
+                <span class="stat-value" id="last-updated">--</span>
+                <span class="stat-label">Last Updated</span>
+            </div>
+            <button class="btn btn-refresh" id="refresh-data" title="Refresh Data">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12a9 9 0 11-2.2-5.9"/>
+                    <path d="M21 3v6h-6"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Filter Controls -->
+        <aside class="filters-panel">
+            <div class="filter-section">
+                <h3 class="filter-title">Date Range</h3>
+                <div class="date-presets">
+                    <button class="preset-btn" data-preset="today">Today</button>
+                    <button class="preset-btn" data-preset="week">This Week</button>
+                    <button class="preset-btn" data-preset="month">This Month</button>
+                    <button class="preset-btn" data-preset="30days">Last 30 Days</button>
+                </div>
+                <div class="date-inputs">
+                    <div class="input-group">
+                        <label for="start-date">From</label>
+                        <input type="date" id="start-date" value="2026-01-01">
+                    </div>
+                    <div class="input-group">
+                        <label for="end-date">To</label>
+                        <input type="date" id="end-date">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3 class="filter-title">Search</h3>
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="global-search" placeholder="Search vendors, agencies, titles...">
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3 class="filter-title">Minimum Amount</h3>
+                <div class="amount-filter">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" id="min-amount" value="0" min="0" step="1000">
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3 class="filter-title">Vendors</h3>
+                <select id="vendor-filter" multiple>
+                    <option value="">All Vendors</option>
+                </select>
+                <div class="selected-tags" id="vendor-tags"></div>
+            </div>
+
+            <div class="filter-section">
+                <h3 class="filter-title">Agencies</h3>
+                <select id="agency-filter" multiple>
+                    <option value="">All Agencies</option>
+                </select>
+                <div class="selected-tags" id="agency-tags"></div>
+            </div>
+
+            <div class="filter-section">
+                <h3 class="filter-title">Sort By</h3>
+                <select id="sort-by">
+                    <option value="amount-desc">Amount (High to Low)</option>
+                    <option value="amount-asc">Amount (Low to High)</option>
+                    <option value="count-desc">Contract Count (High to Low)</option>
+                    <option value="count-asc">Contract Count (Low to High)</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button class="btn btn-primary" id="apply-filters">Apply Filters</button>
+                <button class="btn btn-secondary" id="reset-filters">Reset</button>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <section class="content">
+            <!-- Tab Navigation -->
+            <nav class="tabs">
+                <button class="tab active" data-tab="sankey">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18"/>
+                        <path d="M7 16l4-8 4 4 4-8"/>
+                    </svg>
+                    Sankey Diagram
+                </button>
+                <button class="tab" data-tab="matrix">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+                    </svg>
+                    Matrix View
+                </button>
+            </nav>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Sankey View -->
+                <div class="tab-pane active" id="sankey-view">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Vendor → Agency Contract Flow</h2>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-color vendor"></span>Vendors</span>
+                                <span class="legend-item"><span class="legend-color agency"></span>Agencies</span>
+                            </div>
+                        </div>
+                        <div id="sankey-chart" class="chart"></div>
+                    </div>
+                </div>
+
+                <!-- Matrix View -->
+                <div class="tab-pane" id="matrix-view">
+                    <div class="matrix-container">
+                        <div class="chart-header">
+                            <h2>Vendor × Agency Matrix</h2>
+                        </div>
+                        <div id="matrix-chart" class="matrix"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading contract data...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/sankey.js"></script>
+    <script src="js/matrix.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
